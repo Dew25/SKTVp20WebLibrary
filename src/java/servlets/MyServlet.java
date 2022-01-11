@@ -6,11 +6,15 @@
 package servlets;
 
 import entity.Author;
+import entity.Book;
 import entity.Reader;
 import facade.AuthorFacade;
+import facade.BookFacade;
 import facade.ReaderFacade;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 import javax.ejb.EJB;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -22,12 +26,18 @@ import javax.servlet.http.HttpServletResponse;
  *
  * @author user
  */
-@WebServlet(name = "MyServlet", urlPatterns = {"/MyServlet"})
+@WebServlet(name = "MyServlet", urlPatterns = {
+    "/myServlet",
+    "/addBook",
+    "/createBook"
+})
 public class MyServlet extends HttpServlet {
     @EJB
     private AuthorFacade authorFacade;
     @EJB
     private ReaderFacade readerFacade;
+    @EJB
+    private BookFacade bookFacade;
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -41,16 +51,53 @@ public class MyServlet extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
+        request.setCharacterEncoding("UTF-8");
+        String path = request.getServletPath();
+        switch (path) {
+            case "/myServlet":
+                String info = "Привет от MyServlet!";
+                request.setAttribute("infoText", info);
+                request.getRequestDispatcher("/page1.jsp").forward(request, response);
+                break;
+            case "/addBook":
+                info = "Добавление книги";
+                request.setAttribute("infoText", info);
+                List<Author> listAuthors = authorFacade.findAll();
+                request.setAttribute("listAuthors", listAuthors);
+                request.getRequestDispatcher("/addBook.jsp").forward(request, response);
+                break;
+            case "/createBook":
+                String nameBook = request.getParameter("bookName");
+                String[] authors = request.getParameterValues("authors");
+                String quantity = request.getParameter("quantity");
+                String releaseYear = request.getParameter("releaseYear");
+                listAuthors = new ArrayList<>();
+                for (int i = 0; i < authors.length; i++) {
+                    listAuthors.add(authorFacade.find(Long.parseLong(authors[i])));
+                }
+                Book book = new Book();
+                book.setBookName(nameBook);
+                book.setAuthors(listAuthors);
+                book.setQuantity(Integer.parseInt(quantity));
+                book.setCount(book.getQuantity());
+                book.setPublishedYear(Integer.parseInt(releaseYear));
+                bookFacade.create(book);
+                info = "Книга добавлена";
+                request.setAttribute("infoText", info);
+                request.getRequestDispatcher("/page1.jsp").forward(request, response);
+                break;
+            
+        }
 //        Author author = new Author();
 //        author.setFirstname("Петр");
 //        author.setLastname("Петров");
-        Author author = authorFacade.find(2L);
-        String info = "Привет от MyServlet!";
-        request.setAttribute("infoText", info);
-        request.setAttribute("author", author);
-        Reader reader = readerFacade.find(1L);
-        request.setAttribute("reader", reader);
-        request.getRequestDispatcher("/page1.jsp").forward(request, response);
+//        Author author = authorFacade.find(2L);
+//        String info = "Привет от MyServlet!";
+//        request.setAttribute("infoText", info);
+//        request.setAttribute("author", author);
+//        Reader reader = readerFacade.find(1L);
+//        request.setAttribute("reader", reader);
+//        request.getRequestDispatcher("/page1.jsp").forward(request, response);
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
