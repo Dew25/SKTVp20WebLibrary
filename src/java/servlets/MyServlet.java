@@ -7,11 +7,15 @@ package servlets;
 
 import entity.Author;
 import entity.Book;
+import entity.History;
+import entity.Reader;
 import facade.AuthorFacade;
 import facade.BookFacade;
+import facade.HistoryFacade;
 import facade.ReaderFacade;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import javax.ejb.EJB;
 import javax.servlet.ServletException;
@@ -30,6 +34,8 @@ import javax.servlet.http.HttpServletResponse;
     "/createBook",
     "/addAuthor",
     "/createAuthor",
+    "/takeOnBook",
+    "/createHistory",
         
 })
 public class MyServlet extends HttpServlet {
@@ -39,6 +45,8 @@ public class MyServlet extends HttpServlet {
     private ReaderFacade readerFacade;
     @EJB
     private BookFacade bookFacade;
+    @EJB
+    private HistoryFacade historyFacade;
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -103,6 +111,29 @@ public class MyServlet extends HttpServlet {
                 request.setAttribute("infoText", info);
                 request.getRequestDispatcher("/addAuthor.jsp").forward(request, response);
                 break;
+            case "/takeOnBook":
+                List<Book> books = bookFacade.findAll();
+                List<Reader> readers = readerFacade.findAll();
+                request.setAttribute("books", books);
+                request.setAttribute("readers", readers);
+                request.getRequestDispatcher("/takeOnBook.jsp").forward(request, response);
+                break;
+            case "/createHistory":
+                String[] idBooks = request.getParameterValues("books");
+                String idReader = request.getParameter("readerId");
+                Reader reader = readerFacade.find(Long.parseLong(idReader));
+                History history = null;
+                for (int i = 0; i < idBooks.length; i++) {
+                    Book takeBook = bookFacade.find(Long.parseLong(idBooks[i]));
+                    history = new History();
+                    history.setBook(takeBook);
+                    history.setReader(reader);
+                    history.setGivenDate(Calendar.getInstance().getTime());
+                    historyFacade.create(history);
+                }
+                request.getRequestDispatcher("/takeOnBook").forward(request, response);
+                break;
+                
             
         }
 //        Author author = new Author();
