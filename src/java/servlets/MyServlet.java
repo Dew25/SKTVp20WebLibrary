@@ -7,12 +7,10 @@ package servlets;
 
 import entity.Author;
 import entity.Book;
-import entity.Reader;
 import facade.AuthorFacade;
 import facade.BookFacade;
 import facade.ReaderFacade;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import javax.ejb.EJB;
@@ -27,9 +25,12 @@ import javax.servlet.http.HttpServletResponse;
  * @author user
  */
 @WebServlet(name = "MyServlet", urlPatterns = {
-    "/myServlet",
+    "/index",
     "/addBook",
-    "/createBook"
+    "/createBook",
+    "/addAuthor",
+    "/createAuthor",
+        
 })
 public class MyServlet extends HttpServlet {
     @EJB
@@ -54,13 +55,13 @@ public class MyServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         String path = request.getServletPath();
         switch (path) {
-            case "/myServlet":
-                String info = "Привет от MyServlet!";
-                request.setAttribute("infoText", info);
-                request.getRequestDispatcher("/page1.jsp").forward(request, response);
+            case "/index":
+                List<Book> listBooks = bookFacade.findAll();
+                request.setAttribute("books", listBooks);
+                request.getRequestDispatcher("/listBooks.jsp").forward(request, response);
                 break;
             case "/addBook":
-                info = "Добавление книги";
+                String info = "Добавление книги";
                 request.setAttribute("infoText", info);
                 List<Author> listAuthors = authorFacade.findAll();
                 request.setAttribute("listAuthors", listAuthors);
@@ -70,7 +71,7 @@ public class MyServlet extends HttpServlet {
                 String nameBook = request.getParameter("bookName");
                 String[] authors = request.getParameterValues("authors");
                 String quantity = request.getParameter("quantity");
-                String releaseYear = request.getParameter("releaseYear");
+                String publishedYear = request.getParameter("publishedYear");
                 listAuthors = new ArrayList<>();
                 for (int i = 0; i < authors.length; i++) {
                     listAuthors.add(authorFacade.find(Long.parseLong(authors[i])));
@@ -80,11 +81,27 @@ public class MyServlet extends HttpServlet {
                 book.setAuthors(listAuthors);
                 book.setQuantity(Integer.parseInt(quantity));
                 book.setCount(book.getQuantity());
-                book.setPublishedYear(Integer.parseInt(releaseYear));
+                book.setPublishedYear(Integer.parseInt(publishedYear));
                 bookFacade.create(book);
                 info = "Книга добавлена";
                 request.setAttribute("infoText", info);
-                request.getRequestDispatcher("/page1.jsp").forward(request, response);
+                request.getRequestDispatcher("/index.html").forward(request, response);
+                break;
+            case "/addAuthor":
+                info = "Добавление автора";
+                request.setAttribute("infoText", info);
+                request.getRequestDispatcher("/addAuthor.jsp").forward(request, response);
+                break;
+            case "/createAuthor":
+                String firstName = request.getParameter("firstName");
+                String lastName = request.getParameter("lastName");
+                Author author = new Author();
+                author.setFirstname(firstName);
+                author.setLastname(lastName);
+                authorFacade.create(author);
+                info = "Автор добавлен";
+                request.setAttribute("infoText", info);
+                request.getRequestDispatcher("/addAuthor.jsp").forward(request, response);
                 break;
             
         }
